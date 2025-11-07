@@ -48,17 +48,7 @@ Tecnologia	Função
 🎨 Tailwind CSS	Estilização moderna e responsiva
 🧮 PapaParse	Leitura e escrita de CSV
 🌐 Minha Receita API	Fonte dos dados do CNPJ
-🖥️ Demonstração
-Tela	Descrição
-Consulta individual	Busca um único CNPJ com detalhes organizados.
-Upload CSV	Faz upload, consulta em lote e gera novo CSV enriquecido.
-Filtro de campos	Seleciona dinamicamente os campos desejados.
 
-📸 (Adicione aqui prints das telas depois, exemplo:)
-
-![Tela inicial](docs/screenshot1.png)
-![Consulta CNPJ](docs/screenshot2.png)
-![Upload CSV](docs/screenshot3.png)
 
 ⚙️ Instalação local
 
