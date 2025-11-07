@@ -704,12 +704,6 @@ const App: React.FC = () => {
             </div>
           )}
         </section>
-
-        <p className="mt-2 text-xs text-slate-500 text-center">
-          Obs: se a API bloquear requisições diretas do navegador por CORS,
-          você vai precisar de um backend/proxy simples (Node, .NET, etc.) para
-          fazer as chamadas.
-        </p>
       </div>
     </div>
   );
