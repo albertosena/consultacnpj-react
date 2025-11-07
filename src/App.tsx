@@ -115,9 +115,49 @@ const App: React.FC = () => {
   const isValidCnpjLength = numericCnpj.length === 14;
 
   // --- CSV em lote ---
-  const [selectedFields, setSelectedFields] = useState<string[]>(
-    ENRICH_FIELDS.map((f) => f.key) // começa com todos selecionados
+  // 🔽 Campos dinâmicos da API
+  const [allFields, setAllFields] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  const [filterSearch, setFilterSearch] = useState("");
+
+  // 🔽 Atualiza lista de campos automaticamente com base no último JSON da API
+  React.useEffect(() => {
+    async function fetchSampleCnpj() {
+      try {
+        const resp = await fetch("https://minhareceita.org/49752997000125");
+        const json = await resp.json();
+        const keys = Object.keys(json).sort();
+        setAllFields(keys);
+        setSelectedFields(keys); // marca todos por padrão
+      } catch (e) {
+        console.error("Erro ao obter campos de exemplo:", e);
+      }
+    }
+    fetchSampleCnpj();
+  }, []);
+
+
+  // 🔽 Atualiza lista de campos automaticamente com base no último JSON da API
+  React.useEffect(() => {
+    async function fetchSampleCnpj() {
+      try {
+        const resp = await fetch("https://minhareceita.org/49752997000125");
+        const json = await resp.json();
+        const keys = Object.keys(json).sort();
+        setAllFields(keys);
+        setSelectedFields(keys); // marca todos por padrão
+      } catch (e) {
+        console.error("Erro ao obter campos de exemplo:", e);
+      }
+    }
+    fetchSampleCnpj();
+  }, []);
+
+  // 🔽 Filtro de busca
+  const filteredFields = allFields.filter((key) =>
+    key.toLowerCase().includes(filterSearch)
   );
+
   const [csvStatus, setCsvStatus] = useState<
     "idle" | "parsing" | "enriching" | "done" | "error"
   >("idle");
@@ -159,7 +199,7 @@ const App: React.FC = () => {
       console.error(err);
       setError(
         err?.message ||
-          "Não foi possível buscar os dados. Tente novamente mais tarde."
+        "Não foi possível buscar os dados. Tente novamente mais tarde."
       );
     } finally {
       setLoading(false);
@@ -299,7 +339,7 @@ const App: React.FC = () => {
       setCsvStatus("error");
       setCsvMessage(
         err?.message ||
-          "Ocorreu um erro ao processar o CSV. Verifique o arquivo e tente novamente."
+        "Ocorreu um erro ao processar o CSV. Verifique o arquivo e tente novamente."
       );
     } finally {
       setCsvProcessing(false);
@@ -432,9 +472,9 @@ const App: React.FC = () => {
                       <span className="text-slate-400">Telefone 1: </span>
                       {data.ddd_telefone_1
                         ? `(${data.ddd_telefone_1.slice(
-                            0,
-                            2
-                          )}) ${data.ddd_telefone_1.slice(2)}`
+                          0,
+                          2
+                        )}) ${data.ddd_telefone_1.slice(2)}`
                         : "-"}
                     </p>
                     <p>
@@ -544,34 +584,71 @@ const App: React.FC = () => {
             escolher abaixo.
           </p>
 
-          {/* Filtro de campos (quais colunas da API incluir no CSV) */}
+          {/* 🔽 Filtro de campos (dinâmico, todos os campos do JSON) */}
           <div className="mb-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">
               Campos para enriquecer o CSV
             </h3>
-            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 text-sm">
-              {ENRICH_FIELDS.map((field) => (
-                <label
-                  key={field.key}
-                  className="flex items-center gap-2 text-slate-200 cursor-pointer"
+
+            {/* Campo de busca */}
+            <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <input
+                type="text"
+                placeholder="Filtrar campos (ex: razao, municipio...)"
+                className="input sm:max-w-xs"
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value.toLowerCase())}
+              />
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="text-xs px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white"
+                  onClick={() => setSelectedFields(allFields)}
                 >
-                  <input
-                    type="checkbox"
-                    className="rounded border-slate-600 bg-slate-950 text-sky-500"
-                    checked={selectedFields.includes(field.key)}
-                    onChange={() => toggleField(field.key)}
-                  />
-                  <span>{field.label}</span>
-                </label>
-              ))}
+                  Marcar todos
+                </button>
+                <button
+                  type="button"
+                  className="text-xs px-3 py-1.5 rounded-md bg-rose-600 hover:bg-rose-500 text-white"
+                  onClick={() => setSelectedFields([])}
+                >
+                  Limpar todos
+                </button>
+              </div>
             </div>
+
+            {/* Lista de checkboxes */}
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 text-sm max-h-72 overflow-auto border border-slate-800 rounded-xl p-3">
+              {filteredFields.length > 0 ? (
+                filteredFields.map((key) => (
+                  <label
+                    key={key}
+                    className="flex items-center gap-2 text-slate-200 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-600 bg-slate-950 text-sky-500"
+                      checked={selectedFields.includes(key)}
+                      onChange={() => toggleField(key)}
+                    />
+                    <span>{key}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="text-xs text-slate-500 col-span-full">
+                  Nenhum campo encontrado com esse filtro.
+                </p>
+              )}
+            </div>
+
             {selectedFields.length === 0 && (
               <p className="mt-1 text-xs text-amber-400">
-                Nenhum campo selecionado — o CSV de saída terá apenas as colunas
-                originais.
+                Nenhum campo selecionado — o CSV de saída terá apenas as colunas originais.
               </p>
             )}
           </div>
+
 
           {/* Upload do CSV */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -618,11 +695,10 @@ const App: React.FC = () => {
 
           {csvMessage && (
             <div
-              className={`mt-3 rounded-xl px-3 py-2 text-xs ${
-                csvStatus === "error"
-                  ? "bg-rose-950/60 border border-rose-500/60 text-rose-100"
-                  : "bg-slate-950/60 border border-slate-700 text-slate-100"
-              }`}
+              className={`mt-3 rounded-xl px-3 py-2 text-xs ${csvStatus === "error"
+                ? "bg-rose-950/60 border border-rose-500/60 text-rose-100"
+                : "bg-slate-950/60 border border-slate-700 text-slate-100"
+                }`}
             >
               {csvMessage}
             </div>
