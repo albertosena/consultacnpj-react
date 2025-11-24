@@ -136,23 +136,6 @@ const App: React.FC = () => {
     fetchSampleCnpj();
   }, []);
 
-
-  // 🔽 Atualiza lista de campos automaticamente com base no último JSON da API
-  React.useEffect(() => {
-    async function fetchSampleCnpj() {
-      try {
-        const resp = await fetch("https://minhareceita.org/49752997000125");
-        const json = await resp.json();
-        const keys = Object.keys(json).sort();
-        setAllFields(keys);
-        setSelectedFields(keys); // marca todos por padrão
-      } catch (e) {
-        console.error("Erro ao obter campos de exemplo:", e);
-      }
-    }
-    fetchSampleCnpj();
-  }, []);
-
   // 🔽 Filtro de busca
   const filteredFields = allFields.filter((key) =>
     key.toLowerCase().includes(filterSearch)
@@ -168,6 +151,8 @@ const App: React.FC = () => {
     "cnpjs-enriquecidos.csv"
   );
   const [csvProcessing, setCsvProcessing] = useState(false);
+  const [previewData, setPreviewData] = useState<Record<string, string>[]>([]);
+  const [fileToProcess, setFileToProcess] = useState<File | null>(null);
 
   async function handleSearch(e?: React.FormEvent) {
     e?.preventDefault();
@@ -217,11 +202,12 @@ const App: React.FC = () => {
     );
   }
 
-  async function handleCsvUpload(file: File) {
-    setCsvStatus("parsing");
+  async function handleFileSelect(file: File) {
+    setCsvStatus("idle");
     setCsvMessage(null);
     setCsvProgress(0);
-    setCsvProcessing(true);
+    setPreviewData([]);
+    setFileToProcess(null);
     if (csvDownloadUrl) {
       URL.revokeObjectURL(csvDownloadUrl);
       setCsvDownloadUrl(null);
@@ -229,10 +215,10 @@ const App: React.FC = () => {
 
     try {
       const text = await file.text();
-
       const parsed = Papa.parse<Record<string, string>>(text, {
         header: true,
         skipEmptyLines: true,
+        preview: 5, // Apenas as 5 primeiras linhas para preview
       });
 
       if (parsed.errors && parsed.errors.length > 0) {
@@ -243,7 +229,6 @@ const App: React.FC = () => {
       }
 
       const rows = parsed.data;
-
       if (!rows.length) {
         throw new Error("O arquivo CSV está vazio.");
       }
@@ -254,6 +239,40 @@ const App: React.FC = () => {
         );
       }
 
+      setPreviewData(rows);
+      setFileToProcess(file);
+      setCsvFileName(
+        file.name.toLowerCase().endsWith(".csv")
+          ? file.name.replace(/\.csv$/i, "-enriquecido.csv")
+          : file.name + "-enriquecido.csv"
+      );
+
+    } catch (err: any) {
+      console.error(err);
+      setCsvStatus("error");
+      setCsvMessage(
+        err?.message ||
+        "Ocorreu um erro ao ler o arquivo. Verifique se é um CSV válido."
+      );
+    }
+  }
+
+  async function processCsv() {
+    if (!fileToProcess) return;
+
+    setCsvStatus("parsing");
+    setCsvProcessing(true);
+    setCsvMessage(null);
+
+    try {
+      const text = await fileToProcess.text();
+      const parsed = Papa.parse<Record<string, string>>(text, {
+        header: true,
+        skipEmptyLines: true,
+      });
+
+      const rows = parsed.data;
+
       setCsvStatus("enriching");
       setCsvMessage("Consultando API para cada CNPJ...");
       const total = rows.length;
@@ -261,7 +280,6 @@ const App: React.FC = () => {
 
       let processed = 0;
 
-      // Processa cada linha de forma sequencial (pode ser paralelizado depois)
       for (const row of rows) {
         const rawCnpj = (row["cnpj"] || "").toString();
         const numeric = rawCnpj.replace(/\D/g, "");
@@ -292,7 +310,6 @@ const App: React.FC = () => {
               let value: any = (apiData as any)[field.key];
 
               if (field.key === "capital_social" && typeof value === "number") {
-                // pode ajustar o formato se quiser
                 value = value.toString().replace(".", ",");
               }
 
@@ -325,11 +342,6 @@ const App: React.FC = () => {
       const url = URL.createObjectURL(blob);
 
       setCsvDownloadUrl(url);
-      setCsvFileName(
-        file.name.toLowerCase().endsWith(".csv")
-          ? file.name.replace(/\.csv$/i, "-enriquecido.csv")
-          : file.name + "-enriquecido.csv"
-      );
       setCsvStatus("done");
       setCsvMessage(
         `Processamento concluído. ${enrichedRows.length} linhas enriquecidas.`
@@ -343,14 +355,15 @@ const App: React.FC = () => {
       );
     } finally {
       setCsvProcessing(false);
+      setPreviewData([]); // Limpa o preview após processar
+      setFileToProcess(null);
     }
   }
 
   function handleCsvInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    void handleCsvUpload(file);
-    // limpa o input para permitir subir o mesmo arquivo de novo depois
+    void handleFileSelect(file);
     e.target.value = "";
   }
 
@@ -692,6 +705,50 @@ const App: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Preview do CSV */}
+          {previewData.length > 0 && csvStatus === "idle" && (
+            <div className="mt-6 bg-slate-950/60 border border-slate-700 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-slate-200">
+                  Pré-visualização (5 primeiras linhas)
+                </h3>
+                <button
+                  onClick={processCsv}
+                  className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-white text-sm font-medium rounded-lg shadow-lg shadow-sky-500/20 transition"
+                >
+                  Processar Arquivo
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left text-slate-300">
+                  <thead className="text-xs text-slate-400 uppercase bg-slate-900/50">
+                    <tr>
+                      {Object.keys(previewData[0]).map((header) => (
+                        <th key={header} className="px-3 py-2 border-b border-slate-700">
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewData.map((row, index) => (
+                      <tr key={index} className="border-b border-slate-800 hover:bg-slate-800/30">
+                        {Object.values(row).map((value, i) => (
+                          <td key={i} className="px-3 py-2 whitespace-nowrap">
+                            {value}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">
+                Verifique se os dados estão corretos antes de processar.
+              </p>
+            </div>
+          )}
 
           {csvMessage && (
             <div
