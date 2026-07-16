@@ -22,6 +22,10 @@ O **Consulta CNPJ** é uma aplicação web responsiva que consome a API pública
 
 Além da busca individual, a aplicação processa arquivos CSV em lote: você escolhe os campos desejados, acompanha o progresso das consultas e baixa uma nova planilha com os dados enriquecidos.
 
+## Preview
+
+![Tela da aplicação Consulta CNPJ com consulta individual e processamento de CSV](docs/images/consulta-cnpj.png)
+
 ## Funcionalidades
 
 - **Consulta individual:** busca pelo CNPJ com ou sem máscara.
