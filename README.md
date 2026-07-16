@@ -1,147 +1,128 @@
-🧾 Consulta CNPJ React
+<div align="center">
 
-Aplicação React + Vite + Tailwind CSS para consultar dados de CNPJs em tempo real via API Minha Receita
-.
-Permite tanto consultas individuais quanto enriquecimento em massa via CSV, com filtros personalizados de campos.
+# Consulta CNPJ
 
-🌐 Deploy Online:
-👉 https://consultacnpj-react.vercel.app/
+Consulte dados cadastrais de empresas individualmente ou enriqueça uma lista de CNPJs a partir de um arquivo CSV.
 
-🚀 Funcionalidades
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Deploy](https://img.shields.io/badge/Deploy-Vercel-000000?logo=vercel&logoColor=white)](https://consultacnpj-react.vercel.app/)
 
-✅ Consulta individual de CNPJ
+[Acessar aplicação](https://consultacnpj-react.vercel.app/) · [Reportar problema](https://github.com/albertosena/consultacnpj-react/issues)
 
-Busca dados cadastrais, fiscais e de contato diretamente da API.
+</div>
 
-Exibe informações de forma visual e organizada.
+---
 
-Mostra JSON bruto opcionalmente.
+## Sobre o projeto
 
-✅ Upload e processamento de CSV
+O **Consulta CNPJ** é uma aplicação web responsiva que consome a API pública [Minha Receita](https://minhareceita.org/) para simplificar a consulta de informações cadastrais de empresas brasileiras.
 
-Faz upload de um arquivo CSV contendo uma coluna cnpj.
+Além da busca individual, a aplicação processa arquivos CSV em lote: você escolhe os campos desejados, acompanha o progresso das consultas e baixa uma nova planilha com os dados enriquecidos.
 
-Consulta automaticamente todos os CNPJs e gera um novo CSV enriquecido.
+## Funcionalidades
 
-Permite selecionar quais campos incluir (todos os campos disponíveis da API).
+- **Consulta individual:** busca pelo CNPJ com ou sem máscara.
+- **Dados organizados:** exibe situação cadastral, endereço, contatos, atividades, regime e capital social.
+- **Resposta completa:** permite visualizar o JSON bruto retornado pela API.
+- **Processamento em lote:** lê arquivos CSV que contenham uma coluna `cnpj`.
+- **Seleção dinâmica:** permite pesquisar e escolher os campos incluídos no resultado.
+- **Pré-visualização:** mostra as primeiras linhas antes de iniciar o processamento.
+- **Acompanhamento:** indica o progresso das consultas em tempo real.
+- **Exportação:** gera um novo CSV enriquecido para download.
 
-✅ Filtros dinâmicos
+## Tecnologias
 
-Todos os campos do JSON da API são carregados automaticamente.
+| Tecnologia | Uso no projeto |
+| --- | --- |
+| [React 19](https://react.dev/) | Construção da interface |
+| [TypeScript](https://www.typescriptlang.org/) | Tipagem e segurança no desenvolvimento |
+| [Vite](https://vite.dev/) | Ambiente de desenvolvimento e build |
+| [Tailwind CSS](https://tailwindcss.com/) | Estilização responsiva |
+| [Papa Parse](https://www.papaparse.com/) | Leitura e geração de arquivos CSV |
+| [Minha Receita](https://minhareceita.org/) | Fonte pública dos dados de CNPJ |
 
-Permite buscar, marcar todos, limpar todos e selecionar individualmente.
+## Como executar
 
-Interface moderna, leve e responsiva.
+### Pré-requisitos
 
-✅ Interface elegante
+- [Node.js](https://nodejs.org/) 20.19+ ou 22.12+
+- npm
 
-Design escuro moderno com Tailwind CSS.
+### Instalação
 
-Cartões com transparência e sombra suave (glassmorphism).
-
-Progresso de processamento em tempo real.
-
-🧠 Stack utilizada
-Tecnologia	Função
-⚛️ React 18	Framework principal
-⚡ Vite	Build rápido e leve
-🎨 Tailwind CSS	Estilização moderna e responsiva
-🧮 PapaParse	Leitura e escrita de CSV
-🌐 Minha Receita API	Fonte dos dados do CNPJ
-
-
-⚙️ Instalação local
-
-Clone o repositório:
-
+```bash
 git clone https://github.com/albertosena/consultacnpj-react.git
 cd consultacnpj-react
-
-
-Instale as dependências:
-
 npm install
-
-
-Inicie o servidor de desenvolvimento:
-
 npm run dev
+```
 
+Abra [http://localhost:5173](http://localhost:5173) no navegador.
 
-Acesse:
+## Processamento de CSV
 
-http://localhost:5173
+O arquivo deve ter um cabeçalho chamado exatamente `cnpj`. As demais colunas são preservadas no resultado.
 
-🧩 Build para produção
-npm run build
+```csv
+cnpj,referencia
+49752997000125,Cliente A
+00000000000191,Cliente B
+```
 
+Na aplicação:
 
-Os arquivos finais ficarão na pasta dist/.
+1. Selecione os campos que deseja adicionar ao arquivo.
+2. Envie o CSV e confira a pré-visualização.
+3. Clique em **Processar Arquivo**.
+4. Ao final, baixe o CSV enriquecido.
 
-☁️ Deploy na Vercel
+> [!NOTE]
+> As consultas são realizadas sequencialmente no navegador. Arquivos grandes podem levar mais tempo e estão sujeitos aos limites e à disponibilidade da API pública.
 
-Este projeto está hospedado na Vercel com deploy contínuo a partir do GitHub.
-A cada novo commit na branch main, o site é automaticamente atualizado.
+## Scripts
 
-🔗 Acesse em:
-👉 https://consultacnpj-react.vercel.app/
+| Comando | Descrição |
+| --- | --- |
+| `npm run dev` | Inicia o servidor de desenvolvimento |
+| `npm run build` | Valida o TypeScript e gera o build de produção |
+| `npm run preview` | Executa localmente o build gerado |
+| `npm run lint` | Analisa o código com ESLint |
 
-🧱 Estrutura do projeto
+## Estrutura
+
+```text
 consultacnpj-react/
+├── public/                 # Arquivos públicos
 ├── src/
-│   ├── App.tsx             # Componente principal
-│   ├── main.tsx            # Ponto de entrada
-│   ├── index.css           # Estilos globais (Tailwind)
-│   └── assets/             # Imagens, ícones, etc
-├── public/                 # Arquivos estáticos
+│   ├── assets/             # Recursos visuais
+│   ├── App.tsx             # Interface e regras da aplicação
+│   ├── index.css           # Estilos globais e Tailwind CSS
+│   └── main.tsx            # Ponto de entrada
 ├── package.json
 ├── tailwind.config.js
-├── postcss.config.js
+├── tsconfig.json
 └── vite.config.ts
+```
 
-🧠 API utilizada
+## API
 
-A aplicação consome a API pública Minha Receita
-:
+A consulta utiliza o endpoint público:
 
+```http
 GET https://minhareceita.org/{CNPJ}
+```
 
+Não é necessário configurar chave de API. Como o serviço é externo, a aplicação depende de sua disponibilidade e de suas políticas de acesso.
 
-Exemplo de resposta:
+## Deploy
 
-{
-  "razao_social": "A S RIBEIRO",
-  "nome_fantasia": "",
-  "cnae_fiscal_descricao": "Desenvolvimento de programas de computador sob encomenda",
-  "municipio": "BELO HORIZONTE",
-  "uf": "MG",
-  "situacao_cadastral": 2,
-  "descricao_situacao_cadastral": "ATIVA",
-  "data_inicio_atividade": "2023-02-28"
-}
+O projeto está publicado na Vercel e disponível em:
 
+**[consultacnpj-react.vercel.app](https://consultacnpj-react.vercel.app/)**
 
-⚠️ Observação: se a API bloquear por CORS, é possível usar um proxy no backend (Node, .NET, etc.).
+## Autor
 
-🛠️ Scripts disponíveis
-Script	Descrição
-npm run dev	Inicia o servidor local
-npm run build	Gera o build para produção
-npm run preview	Testa o build localmente
-npm run lint	(opcional) Verifica o código com ESLint
-📜 Licença
-
-Este projeto está sob a licença MIT — sinta-se livre para usar, modificar e compartilhar.
-Veja o arquivo LICENSE
- para mais detalhes.
-
-💬 Autor
-
-👤 Alberto Sena
-💼 LinkedIn
-
-💻 GitHub
-
-🌐 App Online
-
-Desenvolvido com ❤️ utilizando React, Tailwind e curiosidade por aprendizado contínuo.
+Desenvolvido por [Alberto Sena](https://github.com/albertosena).
