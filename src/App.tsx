@@ -57,19 +57,56 @@ type CnpjData = {
   descricao_identificador_matriz_filial: string;
 };
 
-// Campos que o usuário pode escolher para enriquecer o CSV
-const ENRICH_FIELDS = [
-  { key: "razao_social", label: "Razão social" },
-  { key: "nome_fantasia", label: "Nome fantasia" },
-  { key: "municipio", label: "Município" },
-  { key: "uf", label: "UF" },
-  { key: "cnae_fiscal", label: "CNAE fiscal" },
-  { key: "cnae_fiscal_descricao", label: "Descrição CNAE" },
-  { key: "descricao_situacao_cadastral", label: "Situação cadastral" },
-  { key: "data_inicio_atividade", label: "Data início atividade" },
-  { key: "opcao_pelo_simples", label: "Simples Nacional" },
-  { key: "opcao_pelo_mei", label: "MEI" },
-  { key: "capital_social", label: "Capital social" },
+// Lista completa de todos os campos retornados pela API de CNPJ
+const ALL_KNOWN_FIELDS = [
+  "cnpj",
+  "identificador_matriz_filial",
+  "descricao_identificador_matriz_filial",
+  "razao_social",
+  "nome_fantasia",
+  "situacao_cadastral",
+  "descricao_situacao_cadastral",
+  "data_situacao_cadastral",
+  "motivo_situacao_cadastral",
+  "descricao_motivo_situacao_cadastral",
+  "nome_cidade_no_exterior",
+  "codigo_pais",
+  "pais",
+  "data_inicio_atividade",
+  "cnae_fiscal",
+  "cnae_fiscal_descricao",
+  "descricao_tipo_de_logradouro",
+  "logradouro",
+  "numero",
+  "complemento",
+  "bairro",
+  "cep",
+  "uf",
+  "codigo_municipio",
+  "codigo_municipio_ibge",
+  "municipio",
+  "ddd_telefone_1",
+  "ddd_telefone_2",
+  "ddd_fax",
+  "email",
+  "situacao_especial",
+  "data_situacao_especial",
+  "opcao_pelo_simples",
+  "data_opcao_pelo_simples",
+  "data_exclusao_do_simples",
+  "opcao_pelo_mei",
+  "data_opcao_pelo_mei",
+  "data_exclusao_do_mei",
+  "capital_social",
+  "porte",
+  "codigo_porte",
+  "natureza_juridica",
+  "codigo_natureza_juridica",
+  "qualificacao_do_responsavel",
+  "ente_federativo_responsavel",
+  "regime_tributario",
+  "cnaes_secundarios",
+  "qsa",
 ];
 
 function formatCnpj(cnpj: string | undefined) {
@@ -115,20 +152,27 @@ const App: React.FC = () => {
   const isValidCnpjLength = numericCnpj.length === 14;
 
   // --- CSV em lote ---
-  // 🔽 Campos dinâmicos da API
-  const [allFields, setAllFields] = useState<string[]>([]);
-  const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  // 🔽 Todos os campos da API (com suporte dinâmico a 100% das chaves do JSON)
+  const [allFields, setAllFields] = useState<string[]>(ALL_KNOWN_FIELDS);
+  const [selectedFields, setSelectedFields] = useState<string[]>(ALL_KNOWN_FIELDS);
   const [filterSearch, setFilterSearch] = useState("");
 
-  // 🔽 Atualiza lista de campos automaticamente com base no último JSON da API
+  // 🔽 Atualiza lista de campos automaticamente com base na API
   React.useEffect(() => {
     async function fetchSampleCnpj() {
       try {
-        const resp = await fetch("https://minhareceita.org/49752997000125");
-        const json = await resp.json();
-        const keys = Object.keys(json).sort();
-        setAllFields(keys);
-        setSelectedFields(keys); // marca todos por padrão
+        const resp = await fetch("https://minhareceita.org/44781719000182");
+        if (resp.ok) {
+          const json = await resp.json();
+          const keys = Array.from(new Set([...ALL_KNOWN_FIELDS, ...Object.keys(json)])).sort();
+          setAllFields(keys);
+          setSelectedFields((prev) => {
+            if (prev.length === ALL_KNOWN_FIELDS.length) {
+              return keys;
+            }
+            return prev;
+          });
+        }
       } catch (e) {
         console.error("Erro ao obter campos de exemplo:", e);
       }
@@ -233,9 +277,13 @@ const App: React.FC = () => {
         throw new Error("O arquivo CSV está vazio.");
       }
 
-      if (!("cnpj" in rows[0])) {
+      const cnpjHeader = Object.keys(rows[0]).find(
+        (key) => key.trim().toLowerCase() === "cnpj"
+      );
+
+      if (!cnpjHeader) {
         throw new Error(
-          "Não encontrei a coluna 'cnpj' no cabeçalho do CSV. Certifique-se de que existe uma coluna com o nome exato 'cnpj'."
+          "Não encontrei a coluna 'cnpj' no cabeçalho do CSV. Certifique-se de que existe uma coluna 'cnpj' ou 'CNPJ'."
         );
       }
 
@@ -281,10 +329,13 @@ const App: React.FC = () => {
       let processed = 0;
 
       for (const row of rows) {
-        const rawCnpj = (row["cnpj"] || "").toString();
+        const cnpjKey = Object.keys(row).find(
+          (k) => k.trim().toLowerCase() === "cnpj"
+        );
+        const rawCnpj = (cnpjKey ? row[cnpjKey] : row["cnpj"] || "").toString();
         const numeric = rawCnpj.replace(/\D/g, "");
 
-        let apiData: CnpjData | null = null;
+        let apiData: Record<string, any> | null = null;
 
         if (numeric.length === 14) {
           try {
@@ -295,7 +346,7 @@ const App: React.FC = () => {
               }
             );
             if (resp.ok) {
-              apiData = (await resp.json()) as CnpjData;
+              apiData = (await resp.json()) as Record<string, any>;
             }
           } catch (e) {
             console.error("Erro ao consultar CNPJ", numeric, e);
@@ -305,27 +356,21 @@ const App: React.FC = () => {
         const outRow: Record<string, any> = { ...row };
 
         if (apiData) {
-          ENRICH_FIELDS.forEach((field) => {
-            if (selectedFields.includes(field.key)) {
-              let value: any = (apiData as any)[field.key];
+          selectedFields.forEach((fieldKey) => {
+            const value = apiData[fieldKey];
 
-              if (field.key === "capital_social" && typeof value === "number") {
-                value = value.toString().replace(".", ",");
-              }
-
-              if (
-                (field.key === "opcao_pelo_simples" ||
-                  field.key === "opcao_pelo_mei") &&
-                typeof value === "boolean"
-              ) {
-                value = value ? "Sim" : "Não";
-              }
-
-              if (field.key === "data_inicio_atividade" && typeof value === "string") {
-                value = formatDate(value);
-              }
-
-              outRow[field.key] = value ?? "";
+            if (value === null || value === undefined) {
+              outRow[fieldKey] = "";
+            } else if (typeof value === "object") {
+              outRow[fieldKey] = JSON.stringify(value);
+            } else if (typeof value === "boolean") {
+              outRow[fieldKey] = value ? "Sim" : "Não";
+            } else if (fieldKey === "capital_social" && typeof value === "number") {
+              outRow[fieldKey] = value.toString().replace(".", ",");
+            } else if (fieldKey.startsWith("data_") && typeof value === "string") {
+              outRow[fieldKey] = formatDate(value);
+            } else {
+              outRow[fieldKey] = value;
             }
           });
         }
@@ -599,9 +644,14 @@ const App: React.FC = () => {
 
           {/* 🔽 Filtro de campos (dinâmico, todos os campos do JSON) */}
           <div className="mb-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">
-              Campos para enriquecer o CSV
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Campos para enriquecer o CSV
+              </h3>
+              <span className="text-xs text-sky-400 font-medium">
+                {selectedFields.length} de {allFields.length} selecionados
+              </span>
+            </div>
 
             {/* Campo de busca */}
             <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
