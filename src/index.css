@@ -1,23 +1,27 @@
+/* ====== Fonte e Reset Global ====== */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ====== Fonte e Reset Global ====== */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-slate-950 text-slate-50 min-h-screen font-['Inter'] antialiased;
+  @apply bg-slate-950 text-slate-50 min-h-screen font-['Plus_Jakarta_Sans',sans-serif] antialiased selection:bg-sky-500/30 selection:text-sky-200;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
 }
 
-/* ====== Animações Suaves ====== */
+/* ====== Animações ====== */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -26,54 +30,30 @@ body {
 }
 
 .fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ====== Cartões e Bordas ====== */
-.card {
-  @apply bg-slate-900/80 border border-slate-800 rounded-2xl shadow-lg shadow-slate-950/40 backdrop-blur;
+/* ====== Glassmorphism & Cards ====== */
+.glass-card {
+  @apply bg-slate-900/70 border border-slate-800/80 rounded-2xl shadow-xl shadow-slate-950/50 backdrop-blur-md;
 }
 
-/* ====== Botões ====== */
-.btn {
-  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-medium transition-colors duration-200;
-}
-
-.btn-primary {
-  @apply bg-sky-500 hover:bg-sky-400 text-white shadow-lg shadow-sky-500/30;
-}
-
-.btn-disabled {
-  @apply bg-slate-700 text-slate-400 cursor-not-allowed;
-}
-
-/* ====== Inputs ====== */
-.input {
-  @apply w-full rounded-xl bg-slate-950/70 border border-slate-700 px-3 py-2.5 text-sm md:text-base outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-400 transition;
-}
-
-/* ====== Títulos ====== */
-.title {
-  @apply text-3xl md:text-4xl font-semibold tracking-tight text-center;
-}
-
-.subtitle {
-  @apply text-slate-400 text-center mt-2;
-}
-
-/* ====== Layout Container ====== */
-.container {
-  @apply w-full max-w-4xl mx-auto px-4 py-6;
+.glass-card-hover {
+  @apply glass-card hover:border-slate-700/80 transition-all duration-300;
 }
 
 /* ====== Scrollbar Custom ====== */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
 }
 ::-webkit-scrollbar-thumb {
-  background-color: #1e293b;
-  border-radius: 4px;
+  background: #334155;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #334155;
+  background: #475569;
 }
